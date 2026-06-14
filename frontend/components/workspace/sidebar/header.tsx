@@ -28,7 +28,7 @@ import { deleteLastProjectIdCookie } from "@/lib/actions/project/cookies.ts";
 import { deleteLastWorkspaceIdCookie, setLastWorkspaceIdCookie } from "@/lib/actions/workspace/cookies.ts";
 import { signOut } from "@/lib/auth-client";
 import { useToast } from "@/lib/hooks/use-toast.ts";
-import { cn, swrFetcher } from "@/lib/utils.ts";
+import { cn, swrFetcher, withBasePath } from "@/lib/utils.ts";
 import { type Workspace, type WorkspaceWithOptionalUsers } from "@/lib/workspaces/types.ts";
 
 interface WorkspaceSidebarHeaderProps {
@@ -54,7 +54,7 @@ const WorkspaceSidebarHeader = ({ workspace }: WorkspaceSidebarHeaderProps) => {
       await deleteLastProjectIdCookie();
       await signOut();
       broadcastLogout();
-      window.location.href = "/";
+      window.location.href = withBasePath("/");
     } catch (e) {
       console.error(e);
     }

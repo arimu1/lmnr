@@ -30,7 +30,7 @@ import { deleteLastProjectIdCookie, setLastProjectIdCookie } from "@/lib/actions
 import { deleteLastWorkspaceIdCookie, setLastWorkspaceIdCookie } from "@/lib/actions/workspace/cookies";
 import { signOut } from "@/lib/auth-client";
 import { useToast } from "@/lib/hooks/use-toast.ts";
-import { cn, swrFetcher } from "@/lib/utils.ts";
+import { cn, swrFetcher, withBasePath } from "@/lib/utils.ts";
 import { type Workspace } from "@/lib/workspaces/types.ts";
 
 const ProjectSidebarHeader = ({ projectId, workspaceId }: { workspaceId: string; projectId: string }) => {
@@ -54,7 +54,7 @@ const ProjectSidebarHeader = ({ projectId, workspaceId }: { workspaceId: string;
       await deleteLastProjectIdCookie();
       await signOut();
       broadcastLogout();
-      window.location.href = "/";
+      window.location.href = withBasePath("/");
     } catch (e) {
       console.error(e);
     }
