@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 const RED_STROKE = "hsl(var(--destructive))";
 const GREEN_STROKE = "hsl(var(--success))";
 
-function formatPct(pctChange: number): string {
-  const pct = Math.round(pctChange * 100);
+// New clusters (prev=0) have no finite % — surface a "NEW" label instead.
+function formatPct(mover: ClusterTopMover): string {
+  if (mover.prevCount === 0) return "NEW";
+  const pct = Math.round(mover.pctChange * 100);
   return `${pct > 0 ? "+" : ""}${pct}%`;
 }
 
@@ -26,7 +28,8 @@ export default function MoverCard({
   isPaywall?: boolean;
   onClick: () => void;
 }) {
-  const isIncrease = mover.pctChange > 0;
+  // Direction from the count delta (sign of z), not pctChange (NaN for new clusters).
+  const isIncrease = mover.currCount > mover.prevCount;
   const stroke = isIncrease ? RED_STROKE : GREEN_STROKE;
   const colorClass = isIncrease ? "text-destructive" : "text-success";
 
@@ -42,7 +45,7 @@ export default function MoverCard({
         <span className={cn("truncate text-sm flex-1", isPaywall && "blur-[5px] select-none")}>{name}</span>
         <span className={cn("flex items-center gap-0.5 text-xs font-medium shrink-0", colorClass)}>
           {isIncrease ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-          {formatPct(mover.pctChange)}
+          {formatPct(mover)}
         </span>
       </div>
       <SignalSparkline data={mover.series} stroke={stroke} />

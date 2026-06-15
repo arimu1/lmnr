@@ -347,11 +347,16 @@ export async function getNewClusterStats(
 
 // --- Top movers (current vs preceding equal-duration window) ---
 
+// Exclude clusters below this combined count so trivial low-count movers
+// (0→1, 1→2) never surface even when their z-score is technically large.
+const TOP_MOVERS_MIN_COMBINED_COUNT = 5;
+
 export interface ClusterTopMover {
   clusterId: string;
   prevCount: number;
   currCount: number;
-  pctChange: number; // signed; always finite
+  zScore: number; // Poisson rate-change z = (cur - prev) / sqrt(cur + prev); drives ranking
+  pctChange: number; // signed; for display only (NaN when prev=0 — render as "NEW")
   series: TimeSeriesDataPoint[]; // current period, bucketed
 }
 
@@ -481,12 +486,18 @@ export async function getClusterTopMovers(
   for (const clusterId of clusterIds) {
     const currCount = currMap.get(clusterId) ?? 0;
     const prevCount = prevMap.get(clusterId) ?? 0;
-    // New cluster (prev 0): use a large-but-finite sentinel so it ranks high
-    // yet stays sortable — never emit Infinity over the wire.
-    const pctChange = prevCount === 0 ? (currCount > 0 ? currCount : 0) : (currCount - prevCount) / prevCount;
-    movers.push({ clusterId, prevCount, currCount, pctChange, series: seriesMap.get(clusterId) ?? [] });
+    const combined = currCount + prevCount;
+    // Soft floor: skip statistically-real-but-trivial movers.
+    if (combined < TOP_MOVERS_MIN_COMBINED_COUNT) continue;
+    // Poisson rate-change z-score: scale-aware, so 1000→1500 outranks 1→2.
+    // combined >= floor (>0 here) so sqrt is always defined.
+    const zScore = (currCount - prevCount) / Math.sqrt(combined);
+    // pctChange is display-only; NaN for new clusters (rendered as "NEW").
+    const pctChange = prevCount === 0 ? NaN : (currCount - prevCount) / prevCount;
+    movers.push({ clusterId, prevCount, currCount, zScore, pctChange, series: seriesMap.get(clusterId) ?? [] });
   }
 
-  movers.sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
+  // Rank by |z| descending; sign of z (= sign of cur - prev) drives direction/color in the UI.
+  movers.sort((a, b) => Math.abs(b.zScore) - Math.abs(a.zScore));
   return { items: movers.slice(0, 10) };
 }
