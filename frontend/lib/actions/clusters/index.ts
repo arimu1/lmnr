@@ -383,9 +383,11 @@ export async function getClusterTopMovers(
   const { projectId, signalId, pastHours, startDate, endDate, intervalValue, intervalUnit } =
     GetClusterTopMoversSchema.parse(input);
 
-  const durationHours = resolveDurationHours(pastHours, startDate, endDate);
+  const durationHoursRaw = resolveDurationHours(pastHours, startDate, endDate);
   // No time range → no notion of a "preceding period"; nothing to compare.
-  if (durationHours === null) return { items: [] };
+  if (durationHoursRaw === null) return { items: [] };
+  // CH INTERVAL only accepts integers; round to whole hours (min 1).
+  const durationHours = Math.max(1, Math.round(durationHoursRaw));
 
   // Current-window clause + WITH FILL for a smooth sparkline.
   const {
@@ -406,11 +408,11 @@ export async function getClusterTopMovers(
   const prevParams: Record<string, unknown> = { durationHours, doubleDurationHours: durationHours * 2 };
   let prevClause: string;
   if (pastHours && !isNaN(parseFloat(pastHours))) {
-    prevClause = `AND timestamp >= now() - INTERVAL {doubleDurationHours:Float64} HOUR
-      AND timestamp < now() - INTERVAL {durationHours:Float64} HOUR`;
+    prevClause = `AND timestamp >= now() - INTERVAL {doubleDurationHours:UInt32} HOUR
+      AND timestamp < now() - INTERVAL {durationHours:UInt32} HOUR`;
   } else {
     prevParams.startTime = String(startDate).replace("Z", "");
-    prevClause = `AND timestamp >= toDateTime64({startTime:String}, 9) - INTERVAL {durationHours:Float64} HOUR
+    prevClause = `AND timestamp >= toDateTime64({startTime:String}, 9) - INTERVAL {durationHours:UInt32} HOUR
       AND timestamp < toDateTime64({startTime:String}, 9)`;
   }
 
