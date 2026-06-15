@@ -1,10 +1,10 @@
 "use client";
 
+import { ChartColumn, ChartPie } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ClusterStatsDataPoint } from "@/lib/actions/clusters";
-import { cn } from "@/lib/utils";
 
 import ClusterStackedChart from "./cluster-stacked-chart";
 import Sunburst from "./sunburst";
@@ -55,22 +55,20 @@ export default function ChartPanel({
 
   return (
     <div className="relative flex h-full flex-col">
-      <div className="absolute right-1 top-1 z-10 flex rounded-md border bg-background p-0.5">
-        {(["frequency", "pie"] as const).map((type) => (
-          <Button
-            key={type}
-            size="sm"
-            variant="ghost"
-            className={cn(
-              "h-6 px-2 text-xs capitalize",
-              chartType === type ? "bg-secondary text-foreground" : "text-muted-foreground"
-            )}
-            onClick={() => setChartType(type)}
-          >
-            {type}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={chartType}
+        onValueChange={(v) => setChartType(v as ChartType)}
+        className="absolute right-1 top-1 z-10"
+      >
+        <TabsList className="h-7 p-0.5">
+          <TabsTrigger value="frequency" aria-label="Frequency chart" className="h-6 px-2">
+            <ChartColumn className="size-3.5" />
+          </TabsTrigger>
+          <TabsTrigger value="pie" aria-label="Pie chart" className="h-6 px-2">
+            <ChartPie className="size-3.5" />
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       {chartType === "frequency" ? (
         <ClusterStackedChart
           clusters={chartClusters}
