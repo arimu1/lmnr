@@ -353,6 +353,7 @@ const TOP_MOVERS_MIN_COMBINED_COUNT = 5;
 
 export interface ClusterTopMover {
   clusterId: string;
+  name: string; // resolved server-side; decreasing movers may be absent from current-window rawClusters
   prevCount: number;
   currCount: number;
   zScore: number; // Poisson rate-change z = (cur - prev) / sqrt(cur + prev); drives ranking
@@ -461,7 +462,13 @@ export async function getClusterTopMovers(
     ORDER BY cluster_id, timestamp ASC ${withFillClause}
   `;
 
-  const [currRows, prevRows, seriesRows] = await Promise.all([
+  // Resolve names server-side. Decreasing movers (e.g. 20→0) drop out of the
+  // current-window rawClusters the client uses, so their name can only come from here.
+  const namesQuery = `
+    SELECT id, name FROM clusters WHERE signal_id = {signalId: UUID} AND level > 0
+  `;
+
+  const [currRows, prevRows, seriesRows, nameRows] = await Promise.all([
     executeQuery<{ cluster_id: string; count: number }>({
       query: currTotalsQuery,
       parameters: { signalId, ...currParams },
@@ -477,7 +484,15 @@ export async function getClusterTopMovers(
       parameters: { signalId, ...currParams },
       projectId,
     }),
+    executeQuery<{ id: string; name: string }>({
+      query: namesQuery,
+      parameters: { signalId },
+      projectId,
+    }),
   ]);
+
+  const nameMap = new Map<string, string>();
+  for (const r of nameRows) nameMap.set(r.id, r.name);
 
   const currMap = new Map<string, number>();
   for (const r of currRows) currMap.set(r.cluster_id, Number(r.count));
@@ -503,7 +518,15 @@ export async function getClusterTopMovers(
     const zScore = (currCount - prevCount) / Math.sqrt(combined);
     // pctChange is display-only; NaN for new clusters (rendered as "NEW").
     const pctChange = prevCount === 0 ? NaN : (currCount - prevCount) / prevCount;
-    movers.push({ clusterId, prevCount, currCount, zScore, pctChange, series: seriesMap.get(clusterId) ?? [] });
+    movers.push({
+      clusterId,
+      name: nameMap.get(clusterId) ?? clusterId,
+      prevCount,
+      currCount,
+      zScore,
+      pctChange,
+      series: seriesMap.get(clusterId) ?? [],
+    });
   }
 
   // Rank by |z| descending; sign of z (= sign of cur - prev) drives direction/color in the UI.

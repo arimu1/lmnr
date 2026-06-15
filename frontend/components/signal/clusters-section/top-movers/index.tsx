@@ -88,7 +88,7 @@ export default function TopMovers({ className }: Props) {
               <MoverCard
                 key={mover.clusterId}
                 mover={mover}
-                name={nameById.get(mover.clusterId) ?? mover.clusterId}
+                name={mover.name || nameById.get(mover.clusterId) || mover.clusterId}
                 isPaywall={isPaywall}
                 onClick={() => onNavigateToCluster(mover.clusterId)}
               />
