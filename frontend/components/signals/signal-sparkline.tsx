@@ -9,9 +9,15 @@ interface SignalSparklineProps {
   data: { timestamp: string; count: number }[];
   maxCount?: number;
   isLoading?: boolean;
+  stroke?: string;
 }
 
-export default function SignalSparkline({ data, maxCount, isLoading }: SignalSparklineProps) {
+export default function SignalSparkline({
+  data,
+  maxCount,
+  isLoading,
+  stroke = "hsl(var(--primary))",
+}: SignalSparklineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
 
@@ -55,14 +61,7 @@ export default function SignalSparkline({ data, maxCount, isLoading }: SignalSpa
       {width > 0 && (
         <LineChart width={width} height={40} data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
           <YAxis domain={[0, Math.max(maxCount ?? 1, 1)]} hide />
-          <Line
-            type="linear"
-            dataKey="count"
-            stroke="hsl(var(--primary))"
-            strokeWidth={1.5}
-            dot={false}
-            isAnimationActive={false}
-          />
+          <Line type="linear" dataKey="count" stroke={stroke} strokeWidth={1.5} dot={false} isAnimationActive={false} />
         </LineChart>
       )}
     </div>

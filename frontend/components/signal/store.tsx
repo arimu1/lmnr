@@ -6,7 +6,12 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 
 import { type ManageSignalForm } from "@/components/signals/create-signal-drawer";
 import { jsonSchemaToSchemaFields } from "@/components/signals/utils";
-import { type ClusterStatsDataPoint, type EventCluster, UNCLUSTERED_ID } from "@/lib/actions/clusters";
+import {
+  type ClusterStatsDataPoint,
+  type ClusterTopMover,
+  type EventCluster,
+  UNCLUSTERED_ID,
+} from "@/lib/actions/clusters";
 import { type Filter } from "@/lib/actions/common/filters.ts";
 import { type Trigger } from "@/lib/actions/signal-triggers";
 import { type Signal } from "@/lib/actions/signals";
@@ -44,6 +49,8 @@ export type SignalState = {
   isClustersLoading: boolean;
   clusterStatsData: ClusterStatsDataPoint[];
   isClusterStatsLoading: boolean;
+  topMovers: ClusterTopMover[];
+  isTopMoversLoading: boolean;
 };
 
 export type FetchClusterStatsParams = {
@@ -57,6 +64,10 @@ export type FetchClustersParams = {
   endDate?: string | null;
 };
 
+export type FetchTopMoversParams = FetchClustersParams & {
+  abortSignal?: AbortSignal;
+};
+
 export type SignalActions = {
   setTraceId: (traceId: string | null) => void;
   setSpanId: (spanId: string | null) => void;
@@ -68,6 +79,7 @@ export type SignalActions = {
   // Cluster actions
   fetchClusters: (params: FetchClustersParams) => Promise<void>;
   fetchClusterStats: (params: FetchClusterStatsParams) => Promise<void>;
+  fetchTopMovers: (params: FetchTopMoversParams) => Promise<void>;
 };
 
 export interface EventsProps {
@@ -207,6 +219,8 @@ export const createSignalStore = (initProps: EventsProps) =>
     isClustersLoading: true,
     clusterStatsData: [],
     isClusterStatsLoading: false,
+    topMovers: [],
+    isTopMoversLoading: false,
     signal: {
       ...initProps.signal,
       prompt: initProps.signal.prompt,
@@ -311,6 +325,32 @@ export const createSignalStore = (initProps: EventsProps) =>
           return;
         }
         set({ clusterStatsData: [], isClusterStatsLoading: false });
+      }
+    },
+    fetchTopMovers: async ({ pastHours, startDate, endDate, abortSignal }: FetchTopMoversParams) => {
+      const { signal } = get();
+      if (!pastHours && !(startDate && endDate)) {
+        set({ topMovers: [], isTopMoversLoading: false });
+        return;
+      }
+
+      set({ isTopMoversLoading: true });
+      try {
+        const urlParams = new URLSearchParams();
+        if (pastHours) urlParams.set("pastHours", pastHours);
+        if (startDate) urlParams.set("startDate", startDate);
+        if (endDate) urlParams.set("endDate", endDate);
+
+        const res = await fetch(
+          `/api/projects/${signal.projectId}/signals/${signal.id}/clusters/top-movers?${urlParams.toString()}`,
+          { signal: abortSignal }
+        );
+        if (!res.ok) throw new Error("Failed to fetch top movers");
+        const data = (await res.json()) as { items: ClusterTopMover[] };
+        set({ topMovers: data.items, isTopMoversLoading: false });
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        set({ topMovers: [], isTopMoversLoading: false });
       }
     },
   }));

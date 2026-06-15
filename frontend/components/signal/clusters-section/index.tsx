@@ -30,6 +30,7 @@ import ControlPanel from "./control-panel";
 import { ClustersViewProvider, useClustersViewStore } from "./control-panel/store";
 import Sunburst from "./sunburst";
 import { buildSunburstData } from "./sunburst/utils";
+import TopMovers from "./top-movers";
 
 interface TimeRange {
   pastHours: string | null;
@@ -59,6 +60,9 @@ function ClustersDashboard({
   const signal = useSignalStoreContext((s) => s.signal);
   const rawClusters = useSignalStoreContext((s) => s.rawClusters);
   const fetchClusterStats = useSignalStoreContext((s) => s.fetchClusterStats);
+  const topMovers = useSignalStoreContext((s) => s.topMovers, shallow);
+  const isTopMoversLoading = useSignalStoreContext((s) => s.isTopMoversLoading);
+  const fetchTopMovers = useSignalStoreContext((s) => s.fetchTopMovers);
 
   // Measure for the stats interval; sunburst sizes itself off its own panel.
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +91,14 @@ function ClustersDashboard({
     return () => controller.abort();
   }, [statsUrl, fetchClusterStats, rawClusters]);
 
+  // Top movers: only fetch when the toggle is on; abort superseded requests.
+  useEffect(() => {
+    if (!showTopMovers) return;
+    const controller = new AbortController();
+    fetchTopMovers({ pastHours, startDate, endDate, abortSignal: controller.signal });
+    return () => controller.abort();
+  }, [showTopMovers, fetchTopMovers, pastHours, startDate, endDate]);
+
   const sunburstData = useMemo(
     () => buildSunburstData(tree, counts, hasTimeRange, unclusteredCount),
     [tree, counts, hasTimeRange, unclusteredCount]
@@ -95,8 +107,14 @@ function ClustersDashboard({
   return (
     <div ref={containerRef} className="relative flex flex-col gap-2 w-full">
       {showTopMovers && (
-        <div className="flex flex-row border rounded-lg overflow-hidden h-[120px] w-full bg-secondary items-center justify-center text-muted-foreground text-sm">
-          Top movers
+        <div className="border rounded-lg overflow-hidden h-[120px] w-full bg-secondary">
+          <TopMovers
+            movers={topMovers}
+            rawClusters={rawClusters}
+            isLoading={isTopMoversLoading}
+            isPaywall={isPaywall}
+            onNavigateToCluster={onNavigateToCluster}
+          />
         </div>
       )}
       <div className="flex flex-row border rounded-lg overflow-hidden h-[260px] w-full bg-secondary">
