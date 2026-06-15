@@ -12,19 +12,18 @@ export interface SunburstData {
   clusterId?: string;
 }
 
-// recharts sums children, so only leaves carry `value` to avoid double-counting.
+// recharts reads each node's own `value` for its arc sweep (it does NOT auto-sum
+// children), so every node — leaves AND internal nodes including the root — must
+// carry `value` or its arc gets a NaN angle and renders invisibly.
 function nodeToSunburst(node: ClusterNode, counts: Map<string, number>, hasTimeRange: boolean): SunburstData {
   const fill = withOpacity(getClusterColorById(node.id), 0.8);
   if (node.children.length === 0) {
     const value = hasTimeRange ? (counts.get(node.id) ?? 0) : node.numEvents;
     return { name: node.name, value, fill, clusterId: node.id };
   }
-  return {
-    name: node.name,
-    fill,
-    clusterId: node.id,
-    children: node.children.map((c) => nodeToSunburst(c, counts, hasTimeRange)),
-  };
+  const children = node.children.map((c) => nodeToSunburst(c, counts, hasTimeRange));
+  const value = children.reduce((acc, c) => acc + (c.value ?? 0), 0);
+  return { name: node.name, value, fill, clusterId: node.id, children };
 }
 
 export function buildSunburstData(
@@ -42,7 +41,8 @@ export function buildSunburstData(
       clusterId: UNCLUSTERED_ID,
     });
   }
-  return { name: "Clusters", fill: "transparent", children };
+  const value = children.reduce((acc, c) => acc + (c.value ?? 0), 0);
+  return { name: "Clusters", value, fill: "transparent", children };
 }
 
 export function sunburstHasData(root: SunburstData): boolean {
