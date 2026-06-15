@@ -11,12 +11,10 @@ import { type ClusterNode } from "../utils";
 
 export default function ActivityItem({
   cluster,
-  isSelected,
   isPaywall,
   onClick,
 }: {
   cluster: ClusterNode;
-  isSelected: boolean;
   isPaywall?: boolean;
   onClick: () => void;
 }) {
@@ -25,19 +23,18 @@ export default function ActivityItem({
     return isNaN(d.getTime()) ? null : formatShortRelativeTime(d);
   }, [cluster.createdAt]);
 
+  // One-way: clicking selects, but global selection never highlights this item.
   return (
     <button
       onClick={isPaywall ? undefined : onClick}
       className={cn(
         "flex items-center gap-2 px-2 py-1.5 rounded text-sm text-left w-full min-w-0 transition-colors text-secondary-foreground",
-        isPaywall ? "cursor-default" : "cursor-pointer hover:bg-muted",
-        isSelected && "bg-sidebar-accent font-medium text-primary-foreground"
+        isPaywall ? "cursor-default" : "cursor-pointer hover:bg-muted"
       )}
     >
       <ClusterIcon
         iconVariant={cluster.children.length > 0 ? "boxes" : "box"}
         color={getClusterColorById(cluster.id)}
-        isSelected={isSelected}
         isPaywall={isPaywall}
       />
       <span className={cn("truncate flex-1", isPaywall && "blur-[5px] select-none")}>{cluster.name}</span>

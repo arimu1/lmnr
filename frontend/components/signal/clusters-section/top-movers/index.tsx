@@ -30,7 +30,7 @@ export default function TopMovers({
     return (
       <div className="flex flex-row gap-2 overflow-hidden p-2">
         {[0, 1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="w-[180px] h-[88px] shrink-0 rounded-md" />
+          <Skeleton key={i} className="w-[288px] h-[88px] shrink-0 rounded-md" />
         ))}
       </div>
     );

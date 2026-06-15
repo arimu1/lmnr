@@ -270,8 +270,9 @@ function PureEventsTable() {
             className="w-full flex-1"
           />
         </div>
-        {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
         <ClustersSection />
+        {/* Breadcrumb sits directly above the table it filters, below the selection mechanisms. */}
+        {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
       </InfiniteDataTable>
     </div>
   );

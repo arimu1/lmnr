@@ -37,7 +37,7 @@ export default function MoverCard({
     <button
       onClick={isPaywall ? undefined : onClick}
       className={cn(
-        "flex flex-col gap-1 w-[180px] shrink-0 border rounded-md p-2 bg-background text-left transition-colors",
+        "flex flex-col gap-1 w-[288px] shrink-0 border rounded-md p-2 bg-secondary text-left transition-colors",
         isPaywall ? "cursor-default" : "cursor-pointer hover:bg-muted"
       )}
     >

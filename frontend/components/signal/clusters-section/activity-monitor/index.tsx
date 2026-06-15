@@ -8,12 +8,10 @@ import ActivityItem from "./activity-item";
 
 export default function ActivityMonitor({
   clusters,
-  selectedClusterId,
   isPaywall,
   onNavigateToCluster,
 }: {
   clusters: ClusterNode[];
-  selectedClusterId: string | null;
   isPaywall: boolean;
   onNavigateToCluster: (id: string) => void;
 }) {
@@ -37,7 +35,6 @@ export default function ActivityMonitor({
             <ActivityItem
               key={cluster.id}
               cluster={cluster}
-              isSelected={selectedClusterId === cluster.id}
               isPaywall={isPaywall}
               onClick={() => onNavigateToCluster(cluster.id)}
             />

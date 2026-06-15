@@ -41,12 +41,10 @@ interface TimeRange {
 function ClustersDashboard({
   isPaywall,
   onNavigateToCluster,
-  selectedClusterId,
   timeRange,
 }: {
   isPaywall: boolean;
   onNavigateToCluster: (id: string) => void;
-  selectedClusterId: string | null;
   timeRange: TimeRange;
 }) {
   const { pastHours, startDate, endDate } = timeRange;
@@ -107,7 +105,7 @@ function ClustersDashboard({
   return (
     <div ref={containerRef} className="relative flex flex-col gap-2 w-full">
       {showTopMovers && (
-        <div className="border rounded-lg overflow-hidden h-[120px] w-full bg-secondary">
+        <div className="h-[120px] w-full">
           <TopMovers
             movers={topMovers}
             rawClusters={rawClusters}
@@ -122,12 +120,7 @@ function ClustersDashboard({
           <Sunburst data={sunburstData} isPaywall={isPaywall} onNavigateToCluster={onNavigateToCluster} />
         </div>
         <div className="w-[320px] shrink-0">
-          <ActivityMonitor
-            clusters={flatClusters}
-            selectedClusterId={selectedClusterId}
-            isPaywall={isPaywall}
-            onNavigateToCluster={onNavigateToCluster}
-          />
+          <ActivityMonitor clusters={flatClusters} isPaywall={isPaywall} onNavigateToCluster={onNavigateToCluster} />
         </div>
       </div>
       <ControlPanel />
@@ -196,7 +189,6 @@ export default function ClustersSection() {
           <ClustersDashboard
             isPaywall={isPaywall}
             onNavigateToCluster={navigateToCluster}
-            selectedClusterId={clusterId}
             timeRange={{ pastHours, startDate, endDate }}
           />
           {isPaywall && (
