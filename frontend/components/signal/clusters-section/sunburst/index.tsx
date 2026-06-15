@@ -53,6 +53,9 @@ export default function Sunburst({
         <div
           className={cn(
             "absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2",
+            // recharts renders each sunburst sector as <g tabIndex={0}>; suppress the
+            // browser's default focus outline (a large box around the arc) on click.
+            "[&_.recharts-sunburst_g:focus]:outline-none [&_.recharts-sunburst_g:focus-visible]:outline-none",
             isPaywall && "blur-[5px] pointer-events-none"
           )}
         >
@@ -61,11 +64,12 @@ export default function Sunburst({
             width={dim}
             height={dim}
             dataKey="value"
-            //padding={3}
-            //ringPadding={6}
+            padding={2}
+            ringPadding={2}
             stroke="var(--color-secondary)"
             startAngle={0}
             endAngle={180}
+            innerRadius={80}
             textOptions={{ fill: "transparent", stroke: "transparent", pointerEvents: "none" }}
             onClick={(node) => {
               const id = (node as SunburstData).clusterId as string | undefined;
