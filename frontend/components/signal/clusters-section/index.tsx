@@ -13,6 +13,7 @@ import {
   getCurrentNode,
   getIsLeaf,
   selectAllClusterCounts,
+  selectFlatClusters,
   selectTree,
   selectUnclusteredCount,
   useSignalStoreContext,
@@ -24,6 +25,7 @@ import { UNCLUSTERED_ID } from "@/lib/actions/clusters";
 import { getHasClusteringAccess } from "@/lib/features/clustering";
 import { track } from "@/lib/posthog";
 
+import ActivityMonitor from "./activity-monitor";
 import ControlPanel from "./control-panel";
 import { ClustersViewProvider, useClustersViewStore } from "./control-panel/store";
 import Sunburst from "./sunburst";
@@ -38,10 +40,12 @@ interface TimeRange {
 function ClustersDashboard({
   isPaywall,
   onNavigateToCluster,
+  selectedClusterId,
   timeRange,
 }: {
   isPaywall: boolean;
   onNavigateToCluster: (id: string) => void;
+  selectedClusterId: string | null;
   timeRange: TimeRange;
 }) {
   const { pastHours, startDate, endDate } = timeRange;
@@ -49,6 +53,7 @@ function ClustersDashboard({
   const showTopMovers = useClustersViewStore((s) => s.showTopMovers);
 
   const tree = useSignalStoreContext(selectTree, shallow);
+  const flatClusters = useSignalStoreContext(selectFlatClusters, shallow);
   const counts = useSignalStoreContext(selectAllClusterCounts, shallow);
   const unclusteredCount = useSignalStoreContext(selectUnclusteredCount);
   const signal = useSignalStoreContext((s) => s.signal);
@@ -98,8 +103,13 @@ function ClustersDashboard({
         <div className="flex-1 min-w-0 border-r p-2">
           <Sunburst data={sunburstData} isPaywall={isPaywall} onNavigateToCluster={onNavigateToCluster} />
         </div>
-        <div className="w-[320px] shrink-0 flex items-center justify-center text-muted-foreground text-sm">
-          Recent clusters
+        <div className="w-[320px] shrink-0">
+          <ActivityMonitor
+            clusters={flatClusters}
+            selectedClusterId={selectedClusterId}
+            isPaywall={isPaywall}
+            onNavigateToCluster={onNavigateToCluster}
+          />
         </div>
       </div>
       <ControlPanel />
@@ -168,6 +178,7 @@ export default function ClustersSection() {
           <ClustersDashboard
             isPaywall={isPaywall}
             onNavigateToCluster={navigateToCluster}
+            selectedClusterId={clusterId}
             timeRange={{ pastHours, startDate, endDate }}
           />
           {isPaywall && (

@@ -12,7 +12,14 @@ import { type Trigger } from "@/lib/actions/signal-triggers";
 import { type Signal } from "@/lib/actions/signals";
 import { type EventRow } from "@/lib/events/types";
 
-import { buildPath, buildTree, type ClusterNode, collectDescendantIds, findNodeById } from "./clusters-section/utils";
+import {
+  buildPath,
+  buildTree,
+  type ClusterNode,
+  collectDescendantIds,
+  findNodeById,
+  flattenTree,
+} from "./clusters-section/utils";
 
 export type { ClusterStatsDataPoint };
 
@@ -78,6 +85,8 @@ export type Store = SignalState & SignalActions;
 // --- Selectors ---
 
 export const selectTree = (state: Store): ClusterNode[] => state.clusterTree;
+
+export const selectFlatClusters = (state: Store): ClusterNode[] => flattenTree(state.clusterTree);
 
 export const getCurrentNode = (state: Store, clusterId: string | null): ClusterNode | null => {
   if (!clusterId) return null;

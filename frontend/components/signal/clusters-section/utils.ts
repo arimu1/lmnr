@@ -41,6 +41,15 @@ export function collectDescendantIds(node: ClusterNode): string[] {
   return ids;
 }
 
+export function flattenTree(nodes: ClusterNode[]): ClusterNode[] {
+  const out: ClusterNode[] = [];
+  for (const node of nodes) {
+    out.push(node);
+    out.push(...flattenTree(node.children));
+  }
+  return out;
+}
+
 export function buildPath(allNodes: ClusterNode[], targetId: string): ClusterNode[] {
   const path: ClusterNode[] = [];
 
