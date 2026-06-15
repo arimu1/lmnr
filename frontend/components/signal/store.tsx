@@ -147,6 +147,16 @@ export const getChartClusters = (state: Store, clusterId: string | null): Cluste
   return clusters;
 };
 
+// Aggregate clusterStatsData into a flat cluster_id -> count map across ALL
+// clusters/levels (used by the sunburst, which renders the whole hierarchy).
+export const selectAllClusterCounts = (state: Store): Map<string, number> => {
+  const counts = new Map<string, number>();
+  for (const row of state.clusterStatsData) {
+    counts.set(row.cluster_id, (counts.get(row.cluster_id) ?? 0) + row.count);
+  }
+  return counts;
+};
+
 export const getFilteredCountByCluster = (
   state: Store,
   clusterId: string | null,

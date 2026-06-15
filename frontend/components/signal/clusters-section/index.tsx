@@ -3,11 +3,20 @@
 import { Circle } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { shallow } from "zustand/shallow";
 
+import { useTimeSeriesStatsUrl } from "@/components/charts/time-series-chart/use-time-series-stats-url";
 import { useClusterId } from "@/components/signal/hooks/use-cluster-id";
 import { useEmergingClusterId } from "@/components/signal/hooks/use-emerging-cluster-id";
-import { getCurrentNode, getIsLeaf, useSignalStoreContext } from "@/components/signal/store.tsx";
+import {
+  getCurrentNode,
+  getIsLeaf,
+  selectAllClusterCounts,
+  selectTree,
+  selectUnclusteredCount,
+  useSignalStoreContext,
+} from "@/components/signal/store.tsx";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useProjectContext } from "@/contexts/project-context";
@@ -17,25 +26,78 @@ import { track } from "@/lib/posthog";
 
 import ControlPanel from "./control-panel";
 import { ClustersViewProvider, useClustersViewStore } from "./control-panel/store";
+import Sunburst from "./sunburst";
+import { buildSunburstData } from "./sunburst/utils";
+
+interface TimeRange {
+  pastHours: string | null;
+  startDate: string | null;
+  endDate: string | null;
+}
 
 function ClustersDashboard({
   isPaywall,
   onNavigateToCluster,
+  timeRange,
 }: {
   isPaywall: boolean;
   onNavigateToCluster: (id: string) => void;
+  timeRange: TimeRange;
 }) {
+  const { pastHours, startDate, endDate } = timeRange;
+  const hasTimeRange = !!(pastHours || (startDate && endDate));
   const showTopMovers = useClustersViewStore((s) => s.showTopMovers);
 
+  const tree = useSignalStoreContext(selectTree, shallow);
+  const counts = useSignalStoreContext(selectAllClusterCounts, shallow);
+  const unclusteredCount = useSignalStoreContext(selectUnclusteredCount);
+  const signal = useSignalStoreContext((s) => s.signal);
+  const rawClusters = useSignalStoreContext((s) => s.rawClusters);
+  const fetchClusterStats = useSignalStoreContext((s) => s.fetchClusterStats);
+
+  // Measure for the stats interval; sunburst sizes itself off its own panel.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) setWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const statsUrl = useTimeSeriesStatsUrl({
+    baseUrl: `/api/projects/${signal.projectId}/signals/${signal.id}/events/clusters/stats`,
+    chartContainerWidth: width,
+    pastHours,
+    startDate,
+    endDate,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchClusterStats({ statsUrl, abortSignal: controller.signal });
+    return () => controller.abort();
+  }, [statsUrl, fetchClusterStats, rawClusters]);
+
+  const sunburstData = useMemo(
+    () => buildSunburstData(tree, counts, hasTimeRange, unclusteredCount),
+    [tree, counts, hasTimeRange, unclusteredCount]
+  );
+
   return (
-    <div className="relative flex flex-col gap-2 w-full">
+    <div ref={containerRef} className="relative flex flex-col gap-2 w-full">
       {showTopMovers && (
         <div className="flex flex-row border rounded-lg overflow-hidden h-[120px] w-full bg-secondary items-center justify-center text-muted-foreground text-sm">
           Top movers
         </div>
       )}
       <div className="flex flex-row border rounded-lg overflow-hidden h-[260px] w-full bg-secondary">
-        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm border-r">Sunburst</div>
+        <div className="flex-1 min-w-0 border-r p-2">
+          <Sunburst data={sunburstData} isPaywall={isPaywall} onNavigateToCluster={onNavigateToCluster} />
+        </div>
         <div className="w-[320px] shrink-0 flex items-center justify-center text-muted-foreground text-sm">
           Recent clusters
         </div>
@@ -103,7 +165,11 @@ export default function ClustersSection() {
     <TooltipProvider delayDuration={200}>
       <ClustersViewProvider>
         <div className="relative w-full">
-          <ClustersDashboard isPaywall={isPaywall} onNavigateToCluster={navigateToCluster} />
+          <ClustersDashboard
+            isPaywall={isPaywall}
+            onNavigateToCluster={navigateToCluster}
+            timeRange={{ pastHours, startDate, endDate }}
+          />
           {isPaywall && (
             <div className="absolute bottom-3 left-3 flex items-center gap-2 px-3 py-2 rounded-md border bg-background">
               <span className="text-xs text-muted-foreground flex-1 min-w-0">
