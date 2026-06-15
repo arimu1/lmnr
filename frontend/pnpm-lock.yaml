@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  recharts@2.15.4:
+    hash: 5042288deacc62988f2a2540d2ef8aa28077157f5c8dd7e5ab2b154ab210eb1c
+    path: patches/recharts@2.15.4.patch
+
 importers:
 
   .:
@@ -319,7 +324,7 @@ importers:
         version: 8.5.9(@types/react@19.2.8)(react@19.2.3)
       recharts:
         specifier: ^2.15.4
-        version: 2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 2.15.4(patch_hash=5042288deacc62988f2a2540d2ef8aa28077157f5c8dd7e5ab2b154ab210eb1c)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rehype-slug:
         specifier: ^6.0.0
         version: 6.0.0
@@ -12788,7 +12793,7 @@ snapshots:
     dependencies:
       decimal.js-light: 2.5.1
 
-  recharts@2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  recharts@2.15.4(patch_hash=5042288deacc62988f2a2540d2ef8aa28077157f5c8dd7e5ab2b154ab210eb1c)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       clsx: 2.1.1
       eventemitter3: 4.0.7

@@ -1,0 +1,28 @@
+diff --git a/es6/chart/SunburstChart.js b/es6/chart/SunburstChart.js
+index 92940316c1cb13f6a32121ee31e14f611dfcc9a2..e330dde1a84d2abf24663f3f59d9480e69e48f84 100644
+--- a/es6/chart/SunburstChart.js
++++ b/es6/chart/SunburstChart.js
+@@ -119,8 +119,8 @@ export var SunburstChart = function SunburstChart(_ref) {
+       currentAngle += arcLength;
+       sectors.push(
+       /*#__PURE__*/
+-      // TODO: Missing key warning. Can we use `key={d.name}`?
+       React.createElement("g", {
++        key: "".concat(d.name, "-").concat(start),
+         "aria-label": d.name,
+         tabIndex: 0
+       }, /*#__PURE__*/React.createElement(Sector, {
+diff --git a/lib/chart/SunburstChart.js b/lib/chart/SunburstChart.js
+index a3463f3d4ab02bfaf894f68516e122ca48362c06..0e8b9ff191cb5424eb354fbf13e9a2a79149598a 100644
+--- a/lib/chart/SunburstChart.js
++++ b/lib/chart/SunburstChart.js
+@@ -129,8 +129,8 @@ var SunburstChart = exports.SunburstChart = function SunburstChart(_ref) {
+       currentAngle += arcLength;
+       sectors.push(
+       /*#__PURE__*/
+-      // TODO: Missing key warning. Can we use `key={d.name}`?
+       _react["default"].createElement("g", {
++        key: "".concat(d.name, "-").concat(start),
+         "aria-label": d.name,
+         tabIndex: 0
+       }, /*#__PURE__*/_react["default"].createElement(_Sector.Sector, {
