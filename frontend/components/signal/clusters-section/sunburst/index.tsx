@@ -51,6 +51,7 @@ export default function Sunburst({
             height={dim}
             dataKey="value"
             stroke="var(--color-background)"
+            textOptions={{ fill: "transparent", stroke: "transparent", pointerEvents: "none" }}
             onClick={(node) => {
               const id = (node as SunburstData).clusterId as string | undefined;
               if (id) onNavigateToCluster(id);
