@@ -18,6 +18,7 @@ import {
   getUnclusteredVirtualCluster,
   getVisibleClusters,
   selectAllClusterCounts,
+  selectTree,
   selectUnclusteredCount,
   useSignalStoreContext,
 } from "@/components/signal/store.tsx";
@@ -32,6 +33,7 @@ import { getHasClusteringAccess } from "@/lib/features/clustering";
 import ChartPanel from "./chart-panel";
 import ClusterList from "./cluster-list";
 import { useNavigateToCluster } from "./use-navigate-to-cluster";
+import { collectDescendantIds } from "./utils";
 
 export default function ClustersSection() {
   const { workspace } = useProjectContext();
@@ -71,6 +73,10 @@ export default function ClustersSection() {
   const allClusterCounts = useSignalStoreContext(selectAllClusterCounts, shallow);
   const unclusteredCount = useSignalStoreContext(selectUnclusteredCount);
   const unclusteredVirtualCluster = useSignalStoreContext(getUnclusteredVirtualCluster);
+
+  // Sunburst always renders the FULL tree; selection is encoded via opacity only.
+  const fullTree = useSignalStoreContext(selectTree, shallow);
+  const descendantIds = useMemo(() => new Set(currentNode ? collectDescendantIds(currentNode) : []), [currentNode]);
 
   // Color is a pure function of cluster id (shared with trace-view), so the
   // map is just for the unclustered virtual bucket plus convenience lookups.
@@ -188,6 +194,9 @@ export default function ClustersSection() {
             ) : (
               <ChartPanel
                 chartClusters={chartClusters}
+                fullTree={fullTree}
+                selectedClusterId={clusterId}
+                descendantIds={descendantIds}
                 statsData={clusterStatsData}
                 containerWidth={localChartWidth}
                 colorMap={colorMap}

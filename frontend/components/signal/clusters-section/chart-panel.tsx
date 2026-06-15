@@ -8,13 +8,17 @@ import { cn } from "@/lib/utils";
 
 import ClusterStackedChart from "./cluster-stacked-chart";
 import Sunburst from "./sunburst";
-import { buildSunburstDataFromClusters } from "./sunburst/utils";
+import { buildSunburstData } from "./sunburst/utils";
 import { type ClusterNode } from "./utils";
 
 type ChartType = "frequency" | "pie";
 
 interface ChartPanelProps {
   chartClusters: ClusterNode[];
+  // FULL tree (sunburst always renders the whole hierarchy); selection is opacity-only.
+  fullTree: ClusterNode[];
+  selectedClusterId: string | null;
+  descendantIds: Set<string>;
   statsData: ClusterStatsDataPoint[];
   containerWidth: number | null;
   colorMap: Map<string, string>;
@@ -28,20 +32,25 @@ interface ChartPanelProps {
 
 export default function ChartPanel({
   chartClusters,
+  fullTree,
+  selectedClusterId,
+  descendantIds,
   statsData,
   containerWidth,
   colorMap,
   isPaywall,
   allClusterCounts,
   hasTimeRange,
+  unclusteredCount,
   onNavigateToCluster,
 }: ChartPanelProps) {
   // View preference — not persisted to URL (URL is reserved for cluster/time state).
   const [chartType, setChartType] = useState<ChartType>("frequency");
 
   const sunburstData = useMemo(
-    () => buildSunburstDataFromClusters(chartClusters, allClusterCounts, hasTimeRange),
-    [chartClusters, allClusterCounts, hasTimeRange]
+    () =>
+      buildSunburstData(fullTree, allClusterCounts, hasTimeRange, selectedClusterId, descendantIds, unclusteredCount),
+    [fullTree, allClusterCounts, hasTimeRange, selectedClusterId, descendantIds, unclusteredCount]
   );
 
   return (
