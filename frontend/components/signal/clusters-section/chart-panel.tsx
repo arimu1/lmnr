@@ -1,8 +1,9 @@
 "use client";
 
 import { ChartColumn, ChartPie } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
+import { useSignalStoreContext } from "@/components/signal/store.tsx";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ClusterStatsDataPoint } from "@/lib/actions/clusters";
 
@@ -44,8 +45,10 @@ export default function ChartPanel({
   unclusteredCount,
   onNavigateToCluster,
 }: ChartPanelProps) {
-  // View preference — not persisted to URL (URL is reserved for cluster/time state).
-  const [chartType, setChartType] = useState<ChartType>("frequency");
+  // View preference lives in the store (not URL — reserved for cluster/time state)
+  // so it survives ChartPanel remounts during the clusters loading state.
+  const chartType = useSignalStoreContext((s) => s.chartType);
+  const setChartType = useSignalStoreContext((s) => s.setChartType);
 
   const sunburstData = useMemo(
     () =>
@@ -60,12 +63,12 @@ export default function ChartPanel({
         onValueChange={(v) => setChartType(v as ChartType)}
         className="absolute right-1 top-1 z-10"
       >
-        <TabsList className="h-7 p-0.5">
-          <TabsTrigger value="frequency" aria-label="Frequency chart" className="h-6 px-2">
-            <ChartColumn className="size-3.5" />
+        <TabsList className="text-secondary-foreground border">
+          <TabsTrigger value="frequency" aria-label="Frequency chart" className="size-7">
+            <ChartColumn className="size-4" />
           </TabsTrigger>
-          <TabsTrigger value="pie" aria-label="Pie chart" className="h-6 px-2">
-            <ChartPie className="size-3.5" />
+          <TabsTrigger value="pie" aria-label="Pie chart" className="size-7">
+            <ChartPie className="size-4" />
           </TabsTrigger>
         </TabsList>
       </Tabs>

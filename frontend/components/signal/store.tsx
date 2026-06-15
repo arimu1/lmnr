@@ -51,6 +51,8 @@ export type SignalState = {
   isClusterStatsLoading: boolean;
   topMovers: ClusterTopMover[];
   isTopMoversLoading: boolean;
+  // Chart view preference — kept in the store (not URL) so it survives ChartPanel remounts on time-range change.
+  chartType: "frequency" | "pie";
 };
 
 export type FetchClusterStatsParams = {
@@ -80,6 +82,7 @@ export type SignalActions = {
   fetchClusters: (params: FetchClustersParams) => Promise<void>;
   fetchClusterStats: (params: FetchClusterStatsParams) => Promise<void>;
   fetchTopMovers: (params: FetchTopMoversParams) => Promise<void>;
+  setChartType: (chartType: SignalState["chartType"]) => void;
 };
 
 export interface EventsProps {
@@ -221,6 +224,7 @@ export const createSignalStore = (initProps: EventsProps) =>
     isClusterStatsLoading: false,
     topMovers: [],
     isTopMoversLoading: false,
+    chartType: "frequency",
     signal: {
       ...initProps.signal,
       prompt: initProps.signal.prompt,
@@ -231,6 +235,7 @@ export const createSignalStore = (initProps: EventsProps) =>
     setTraceId: (traceId) => set({ traceId }),
     setSpanId: (spanId) => set({ spanId }),
     setSelectedEvent: (event) => set({ selectedEvent: event }),
+    setChartType: (chartType) => set({ chartType }),
     setRunsFilters: (filters) =>
       set((state) => ({
         runsFilters: typeof filters === "function" ? filters(state.runsFilters) : filters,

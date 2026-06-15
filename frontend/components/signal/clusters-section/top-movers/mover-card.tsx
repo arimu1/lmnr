@@ -2,8 +2,11 @@
 
 import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 
+import ClusterIcon, { type IconVariant } from "@/components/signal/clusters-section/cluster-list/cluster-icon";
+import { getCurrentNode, useSignalStoreContext } from "@/components/signal/store.tsx";
 import SignalSparkline from "@/components/signals/signal-sparkline";
-import { type ClusterTopMover } from "@/lib/actions/clusters";
+import { type ClusterTopMover, UNCLUSTERED_ID } from "@/lib/actions/clusters";
+import { getClusterColorById, UNCLUSTERED_COLOR } from "@/lib/clusters/colors";
 import { cn } from "@/lib/utils";
 
 // SPEC: frequency increase is bad → red; decrease → green.
@@ -33,6 +36,12 @@ export default function MoverCard({
   const stroke = isIncrease ? RED_STROKE : GREEN_STROKE;
   const colorClass = isIncrease ? "text-destructive" : "text-success";
 
+  // Icon + color sourced exactly like the breadcrumb (ClusterIcon + getClusterColorById).
+  const isUnclustered = mover.clusterId === UNCLUSTERED_ID;
+  const node = useSignalStoreContext((s) => getCurrentNode(s, mover.clusterId));
+  const iconVariant: IconVariant = isUnclustered ? "circle-dashed" : (node?.children.length ?? 0) > 0 ? "boxes" : "box";
+  const iconColor = isUnclustered ? UNCLUSTERED_COLOR : getClusterColorById(mover.clusterId);
+
   return (
     <button
       onClick={isPaywall ? undefined : onClick}
@@ -41,7 +50,8 @@ export default function MoverCard({
         isPaywall ? "cursor-default" : "cursor-pointer hover:bg-muted"
       )}
     >
-      <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <ClusterIcon iconVariant={iconVariant} color={iconColor} isPaywall={isPaywall} />
         <span className={cn("truncate text-sm flex-1", isPaywall && "blur-[5px] select-none")}>{name}</span>
         <span className={cn("flex items-center gap-0.5 text-xs font-medium shrink-0", colorClass)}>
           {isIncrease ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
