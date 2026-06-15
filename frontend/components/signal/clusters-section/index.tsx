@@ -29,13 +29,18 @@ import { useProjectContext } from "@/contexts/project-context";
 import { UNCLUSTERED_ID } from "@/lib/actions/clusters";
 import { getClusterColorById, UNCLUSTERED_COLOR } from "@/lib/clusters/colors";
 import { getHasClusteringAccess } from "@/lib/features/clustering";
+import { cn } from "@/lib/utils";
 
 import ChartPanel from "./chart-panel";
 import ClusterList from "./cluster-list";
 import { useNavigateToCluster } from "./use-navigate-to-cluster";
 import { collectDescendantIds } from "./utils";
 
-export default function ClustersSection() {
+interface Props {
+  className?: string;
+}
+
+export default function ClustersSection({ className }: Props) {
   const { workspace } = useProjectContext();
   const isPaywall = !getHasClusteringAccess(workspace?.tierName);
   const billingHref = workspace ? `/workspace/${workspace.id}?tab=billing` : "/";
@@ -131,7 +136,10 @@ export default function ClustersSection() {
 
   if (isClustersLoading) {
     return (
-      <div className="flex border rounded-lg overflow-hidden h-[240px] w-full bg-secondary" style={{ maxHeight: 300 }}>
+      <div
+        className={cn("flex border rounded-lg overflow-hidden h-[240px] w-full bg-secondary", className)}
+        style={{ maxHeight: 300 }}
+      >
         <div className="w-[320px] shrink-0 border-r overflow-y-auto">
           <div className="flex flex-col gap-0.5 py-2 px-2">
             {[1, 2, 3, 4].map((i) => (
@@ -155,7 +163,7 @@ export default function ClustersSection() {
       <ResizablePanelGroup
         id="clusters-section"
         orientation="horizontal"
-        className="border rounded-lg overflow-hidden h-[240px] min-h-[240px] max-h-[240px]"
+        className={cn("border rounded-lg overflow-hidden h-[240px] min-h-[240px] max-h-[240px]", className)}
       >
         <ResizablePanel defaultSize={"30%"} minSize={"200px"} className="overflow-hidden">
           <div className="relative h-full w-full">

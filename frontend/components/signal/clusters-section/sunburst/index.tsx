@@ -61,7 +61,9 @@ export default function Sunburst({
             width={dim}
             height={dim}
             dataKey="value"
-            stroke="var(--color-background)"
+            //padding={3}
+            //ringPadding={6}
+            stroke="var(--color-secondary)"
             startAngle={0}
             endAngle={180}
             textOptions={{ fill: "transparent", stroke: "transparent", pointerEvents: "none" }}

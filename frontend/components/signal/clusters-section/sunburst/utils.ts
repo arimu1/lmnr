@@ -41,7 +41,9 @@ function nodeToSunburst(
     const value = hasTimeRange ? (counts.get(node.id) ?? 0) : node.numEvents;
     return { name: node.name, value, fill, clusterId: node.id };
   }
-  const children = node.children.map((c) => nodeToSunburst(c, counts, hasTimeRange, scope));
+  // Reverse so children read left→right across the dome (recharts draws the
+  // first child at 0°=right and sweeps CCW toward 180°=left).
+  const children = node.children.map((c) => nodeToSunburst(c, counts, hasTimeRange, scope)).reverse();
   const value = children.reduce((acc, c) => acc + (c.value ?? 0), 0);
   return { name: node.name, value, fill, clusterId: node.id, children };
 }
@@ -59,8 +61,10 @@ export function buildSunburstData(
   unclusteredCount: number
 ): SunburstData {
   const scope: SelectionScope = { selectedId, descendantIds };
-  const children = tree.map((n) => nodeToSunburst(n, counts, hasTimeRange, scope));
+  // Reverse top-level clusters so sorted order reads left→right across the dome.
+  const children = tree.map((n) => nodeToSunburst(n, counts, hasTimeRange, scope)).reverse();
   if (unclusteredCount > 0) {
+    // Pushed AFTER the reverse → Unclustered stays pinned at the right (180°→0°) end.
     children.push({
       name: "Unclustered Events",
       value: unclusteredCount,

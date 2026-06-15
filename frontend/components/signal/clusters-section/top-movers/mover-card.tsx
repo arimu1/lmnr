@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingDown, TrendingUp } from "lucide-react";
 
 import SignalSparkline from "@/components/signals/signal-sparkline";
 import { type ClusterTopMover } from "@/lib/actions/clusters";
@@ -37,7 +37,7 @@ export default function MoverCard({
     <button
       onClick={isPaywall ? undefined : onClick}
       className={cn(
-        "flex flex-col gap-1 w-[288px] shrink-0 border rounded-md p-2 bg-secondary text-left transition-colors",
+        "flex flex-col gap-1 w-[340px] shrink-0 border rounded-md p-2 bg-secondary text-left transition-colors",
         isPaywall ? "cursor-default" : "cursor-pointer hover:bg-muted"
       )}
     >
@@ -49,8 +49,10 @@ export default function MoverCard({
         </span>
       </div>
       <SignalSparkline data={mover.series} stroke={stroke} />
-      <span className="text-xs text-muted-foreground shrink-0">
-        {mover.prevCount} → {mover.currCount}
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+        {mover.prevCount}
+        <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+        {mover.currCount}
       </span>
     </button>
   );

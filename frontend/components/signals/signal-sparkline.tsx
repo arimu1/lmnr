@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Line, LineChart, YAxis } from "recharts";
+import { Line, LineChart, ResponsiveContainer, YAxis } from "recharts";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -57,13 +57,13 @@ export default function SignalSparkline({
   }
 
   return (
-    <div ref={containerRef} className="w-full" style={{ height: 40 }}>
-      {width > 0 && (
-        <LineChart width={width} height={40} data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+    <div className="w-full flex-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
           <YAxis domain={[0, Math.max(maxCount ?? 1, 1)]} hide />
           <Line type="linear" dataKey="count" stroke={stroke} strokeWidth={1.5} dot={false} isAnimationActive={false} />
         </LineChart>
-      )}
+      </ResponsiveContainer>
     </div>
   );
 }

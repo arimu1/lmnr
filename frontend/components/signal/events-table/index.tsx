@@ -8,7 +8,7 @@ import { shallow } from "zustand/shallow";
 import AdvancedSearch from "@/components/common/advanced-search";
 import ClustersSection from "@/components/signal/clusters-section";
 import ClusterBreadcrumbs from "@/components/signal/clusters-section/cluster-breadcrumbs";
-import TopMoversRow from "@/components/signal/clusters-section/top-movers-row";
+import TopMovers from "@/components/signal/clusters-section/top-movers";
 import EmergingClusterBreadcrumbs from "@/components/signal/emerging-cluster-breadcrumbs";
 import { useClusterId } from "@/components/signal/hooks/use-cluster-id";
 import { useEmergingClusterId } from "@/components/signal/hooks/use-emerging-cluster-id";
@@ -272,10 +272,10 @@ function PureEventsTable() {
             className="w-full flex-1"
           />
         </div>
-        <TopMoversRow />
+        <TopMovers className="my-2" />
         {/* Breadcrumb sits above the cluster list + chart, below the top-movers row. */}
         {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
-        <ClustersSection />
+        <ClustersSection className="mb-2" />
       </InfiniteDataTable>
     </div>
   );

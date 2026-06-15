@@ -421,12 +421,19 @@ export async function getClusterTopMovers(
       AND timestamp < toDateTime64({startTime:String}, 9)`;
   }
 
+  // Restrict candidacy to named (level>0) clusters; level-0 "emerging" clusters
+  // have no name and aren't in clusters_v0, so they'd surface as nameless movers.
+  const namedClustersClause = `AND cluster_id IN (
+    SELECT id FROM clusters WHERE signal_id = {signalId: UUID} AND level > 0
+  )`;
+
   const currTotalsQuery = `
     SELECT cluster_id, count() AS count
     FROM signal_events
     ARRAY JOIN clusters AS cluster_id
     WHERE signal_id = {signalId: UUID}
       ${currClause}
+      ${namedClustersClause}
     GROUP BY cluster_id
   `;
 
@@ -436,6 +443,7 @@ export async function getClusterTopMovers(
     ARRAY JOIN clusters AS cluster_id
     WHERE signal_id = {signalId: UUID}
       ${prevClause}
+      ${namedClustersClause}
     GROUP BY cluster_id
   `;
 
@@ -448,6 +456,7 @@ export async function getClusterTopMovers(
     ARRAY JOIN clusters AS cluster_id
     WHERE signal_id = {signalId: UUID}
       ${currClause}
+      ${namedClustersClause}
     GROUP BY cluster_id, timestamp
     ORDER BY cluster_id, timestamp ASC ${withFillClause}
   `;
