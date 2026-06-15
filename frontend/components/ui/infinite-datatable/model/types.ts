@@ -46,6 +46,13 @@ export interface InfiniteDataTableProps<TData extends RowData> extends Omit<
   getRowHref?: (row: Row<TData>) => string;
   loadMoreButton?: boolean | ((props: LoadMoreButtonProps) => ReactNode);
   hideSelectionPanel?: boolean;
+  /**
+   * Opt in to virtualizing against the window/page scroll instead of an internal
+   * `overflow-auto` container, so the whole page scrolls and the table renders
+   * at its natural height. Defaults to false — all other consumers keep the
+   * internal-scroll behavior unchanged.
+   */
+  windowScroll?: boolean;
 }
 
 export interface InfiniteDataTableHeaderProps<TData extends RowData> {

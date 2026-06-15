@@ -64,7 +64,9 @@ export function InfiniteDatatableRow<TData extends RowData>({
         top: 0,
         left: 0,
         width: "100%",
-        transform: `translateY(${virtualRow.start}px)`,
+        // scrollMargin is the container's document offset under window-scroll
+        // virtualization (0 for the internal-scroll path), so rows stay aligned.
+        transform: `translateY(${virtualRow.start - rowVirtualizer.options.scrollMargin}px)`,
         willChange: "transform",
       }}
     >

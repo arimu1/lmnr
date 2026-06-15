@@ -37,7 +37,7 @@ import { type InfiniteDataTableProps } from "./model/types.ts";
 import { InfiniteDatatableBody } from "./ui/body.tsx";
 import { InfiniteDatatableHeader } from "./ui/header.tsx";
 import { SelectionPanel } from "./ui/selection-panel.tsx";
-import { createCheckboxColumn, EMPTY_ARRAY } from "./utils.tsx";
+import { createCheckboxColumn, EMPTY_ARRAY, findScrollParent } from "./utils.tsx";
 
 export function InfiniteDataTable<TData extends RowData>({
   // Infinite scroll props
@@ -78,6 +78,7 @@ export function InfiniteDataTable<TData extends RowData>({
   getRowHref,
   loadMoreButton,
   hideSelectionPanel = false,
+  windowScroll = false,
   ...tableOptions
 }: PropsWithChildren<InfiniteDataTableProps<TData>>) {
   const selectedRowIds = state?.rowSelection ? Object.keys(state.rowSelection) : [];
@@ -215,11 +216,39 @@ export function InfiniteDataTable<TData extends RowData>({
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const [headerTop, setHeaderTop] = useState<number>(0);
 
+  // In windowScroll mode the table renders at natural height and an ANCESTOR
+  // owns the scroll, so the page scrolls instead of the table. We resolve the
+  // nearest scrollable ancestor and feed the virtualizer its scrollMargin
+  // (the table's offset within that scroller) so virtualization stays intact.
+  const childrenRef = useRef<HTMLDivElement>(null);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+  const [scrollMargin, setScrollMargin] = useState(0);
+  useEffect(() => {
+    if (!windowScroll) return;
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const parent = findScrollParent(el);
+    setScrollParent(parent);
+    if (!parent) return;
+
+    // scrollMargin = the table's offset within the scroll container. Recompute
+    // when the content above the table (top-movers/breadcrumb/chart) changes
+    // height, which moves the table down without resizing the scroll parent.
+    const measure = () =>
+      setScrollMargin(el.getBoundingClientRect().top - parent.getBoundingClientRect().top + parent.scrollTop);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(parent);
+    if (childrenRef.current) observer.observe(childrenRef.current);
+    return () => observer.disconnect();
+  }, [windowScroll]);
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
+    getScrollElement: () => (windowScroll ? (scrollParent as HTMLDivElement | null) : tableContainerRef.current),
     estimateSize: () => estimatedRowHeight,
-    overscan: overscan,
+    overscan,
+    scrollMargin: windowScroll ? scrollMargin : 0,
     measureElement:
       typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
@@ -270,7 +299,7 @@ export function InfiniteDataTable<TData extends RowData>({
   }, [fetchNextPage, hasMore, isFetching, isLoading, loadMoreButton]);
 
   return (
-    <div className={cn("flex flex-col gap-2 relative overflow-hidden w-full", className)}>
+    <div className={cn("flex flex-col gap-2 relative w-full", !windowScroll && "overflow-hidden", className)}>
       {!hideSelectionPanel && (
         <SelectionPanel
           selectedRowIds={selectedRowIds}
@@ -278,10 +307,18 @@ export function InfiniteDataTable<TData extends RowData>({
           selectionPanel={selectionPanel}
         />
       )}
-      {children && <div className={cn("flex flex-col gap-2 items-start", childrenClassName)}>{children}</div>}
+      {children && (
+        <div ref={childrenRef} className={cn("flex flex-col gap-2 items-start", childrenClassName)}>
+          {children}
+        </div>
+      )}
       <div
         ref={tableContainerRef}
-        className={cn("flex relative overflow-auto styled-scrollbar bg-secondary", scrollContentClassName)}
+        className={cn(
+          "flex relative styled-scrollbar bg-secondary",
+          windowScroll ? "overflow-visible" : "overflow-auto",
+          scrollContentClassName
+        )}
       >
         <div className="size-full">
           <DndContext

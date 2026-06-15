@@ -76,7 +76,7 @@ function SignalContent() {
           </TabsList>
         </div>
 
-        <TabsContent value="events" className="flex flex-col overflow-hidden">
+        <TabsContent value="events" className="flex flex-col overflow-y-auto">
           <EventsTable />
         </TabsContent>
         {!isFreeTier && (
