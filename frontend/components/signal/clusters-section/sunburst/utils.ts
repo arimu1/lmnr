@@ -26,21 +26,27 @@ function nodeToSunburst(node: ClusterNode, counts: Map<string, number>, hasTimeR
   return { name: node.name, value, fill, clusterId: node.id, children };
 }
 
-export function buildSunburstData(
-  tree: ClusterNode[],
+// Build the sunburst from the SAME scoped node set the bar chart receives
+// (`getChartClusters`), so both charts show identical scope: children of the
+// selected cluster (or the leaf / unclustered bucket). Each scoped node still
+// carries `.children`, so a parent selection renders its descendant rings.
+// The unclustered virtual bucket is already included in `chartClusters` at
+// depth 0, so we don't append it again here.
+export function buildSunburstDataFromClusters(
+  chartClusters: ClusterNode[],
   counts: Map<string, number>,
-  hasTimeRange: boolean,
-  unclusteredCount: number
+  hasTimeRange: boolean
 ): SunburstData {
-  const children = tree.map((n) => nodeToSunburst(n, counts, hasTimeRange));
-  if (unclusteredCount > 0) {
-    children.push({
-      name: "Unclustered Events",
-      value: unclusteredCount,
-      fill: withOpacity(UNCLUSTERED_COLOR, 0.8),
-      clusterId: UNCLUSTERED_ID,
-    });
-  }
+  const children = chartClusters.map((n) =>
+    n.id === UNCLUSTERED_ID
+      ? {
+          name: n.name,
+          value: hasTimeRange ? (counts.get(n.id) ?? 0) : n.numEvents,
+          fill: withOpacity(UNCLUSTERED_COLOR, 0.8),
+          clusterId: n.id,
+        }
+      : nodeToSunburst(n, counts, hasTimeRange)
+  );
   const value = children.reduce((acc, c) => acc + (c.value ?? 0), 0);
   return { name: "Clusters", value, fill: "transparent", children };
 }

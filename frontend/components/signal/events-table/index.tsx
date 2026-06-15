@@ -8,6 +8,7 @@ import { shallow } from "zustand/shallow";
 import AdvancedSearch from "@/components/common/advanced-search";
 import ClustersSection from "@/components/signal/clusters-section";
 import ClusterBreadcrumbs from "@/components/signal/clusters-section/cluster-breadcrumbs";
+import TopMoversRow from "@/components/signal/clusters-section/top-movers-row";
 import EmergingClusterBreadcrumbs from "@/components/signal/emerging-cluster-breadcrumbs";
 import { useClusterId } from "@/components/signal/hooks/use-cluster-id";
 import { useEmergingClusterId } from "@/components/signal/hooks/use-emerging-cluster-id";
@@ -231,9 +232,10 @@ function PureEventsTable() {
   }, [pastHours, startDate, endDate, searchParams, pathName, router]);
 
   return (
-    <div className="flex flex-1 overflow-hidden px-4 pb-4">
+    <div className="flex px-4 pb-4">
       <InfiniteDataTable<EventRow>
         className="w-full"
+        windowScroll
         columns={columns}
         data={events}
         onRowClick={handleRowClick}
@@ -270,9 +272,10 @@ function PureEventsTable() {
             className="w-full flex-1"
           />
         </div>
-        <ClustersSection />
-        {/* Breadcrumb sits directly above the table it filters, below the selection mechanisms. */}
+        <TopMoversRow />
+        {/* Breadcrumb sits above the cluster list + chart, below the top-movers row. */}
         {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
+        <ClustersSection />
       </InfiniteDataTable>
     </div>
   );
