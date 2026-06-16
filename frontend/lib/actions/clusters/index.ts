@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 
 import { TimeRangeSchema } from "@/lib/actions/common/types";
+import { getIntervalForHours } from "@/lib/actions/signals/stats";
 import { executeQuery } from "@/lib/actions/sql";
 
 export type EventCluster = {
@@ -365,8 +366,9 @@ export const GetClusterTopMoversSchema = z.object({
   ...TimeRangeSchema.shape,
   projectId: z.guid(),
   signalId: z.guid(),
-  intervalValue: z.coerce.number().default(1),
-  intervalUnit: z.enum(["minute", "hour", "day"]).default("hour"),
+  // Optional overrides; default to binning inferred from the window duration.
+  intervalValue: z.coerce.number().optional(),
+  intervalUnit: z.enum(["minute", "hour", "day"]).optional(),
 });
 
 // Resolve the selected window duration in hours from the time-range inputs.
@@ -395,6 +397,11 @@ export async function getClusterTopMovers(
   // CH INTERVAL only accepts integers; round to whole hours (min 1).
   const durationHours = Math.max(1, Math.round(durationHoursRaw));
 
+  // Bin identically to the signal-card sparkline; explicit params override.
+  const inferred = getIntervalForHours(durationHours);
+  const binValue = intervalValue ?? inferred.intervalValue;
+  const binUnit = intervalUnit ?? inferred.intervalUnit;
+
   // Current-window clause + WITH FILL for a smooth sparkline.
   const {
     timeClause: currClause,
@@ -405,8 +412,8 @@ export async function getClusterTopMovers(
     pastHours,
     startTime: startDate,
     endTime: endDate,
-    intervalValue,
-    intervalUnit,
+    intervalValue: binValue,
+    intervalUnit: binUnit,
   });
 
   // Previous window = the equal-duration period immediately before the current one.

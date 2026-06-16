@@ -4,15 +4,14 @@ import { ChartColumn, ChartPie } from "lucide-react";
 import { useMemo } from "react";
 
 import { useSignalStoreContext } from "@/components/signal/store.tsx";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { type ClusterStatsDataPoint } from "@/lib/actions/clusters";
+import { cn } from "@/lib/utils";
 
 import ClusterStackedChart from "./cluster-stacked-chart";
 import Sunburst from "./sunburst";
 import { buildSunburstData } from "./sunburst/utils";
 import { type ClusterNode } from "./utils";
-
-type ChartType = "frequency" | "pie";
 
 interface ChartPanelProps {
   chartClusters: ClusterNode[];
@@ -58,20 +57,25 @@ export default function ChartPanel({
 
   return (
     <div className="relative flex h-full flex-col">
-      <Tabs
-        value={chartType}
-        onValueChange={(v) => setChartType(v as ChartType)}
-        className="absolute right-1 top-1 z-10"
-      >
-        <TabsList className="text-secondary-foreground border">
-          <TabsTrigger value="frequency" aria-label="Frequency chart" className="size-7">
-            <ChartColumn className="size-4" />
-          </TabsTrigger>
-          <TabsTrigger value="pie" aria-label="Pie chart" className="size-7">
-            <ChartPie className="size-4" />
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="absolute right-1 top-1 z-10 flex gap-0.5 rounded-md border bg-background p-0.5">
+        {(
+          [
+            { type: "frequency", label: "Frequency chart", Icon: ChartColumn },
+            { type: "pie", label: "Pie chart", Icon: ChartPie },
+          ] as const
+        ).map(({ type, label, Icon }) => (
+          <Button
+            key={type}
+            size="icon"
+            variant="ghost"
+            aria-label={label}
+            className={cn("size-8", chartType === type ? "bg-secondary text-foreground" : "text-muted-foreground")}
+            onClick={() => setChartType(type)}
+          >
+            <Icon className="size-5" />
+          </Button>
+        ))}
+      </div>
       {chartType === "frequency" ? (
         <ClusterStackedChart
           clusters={chartClusters}

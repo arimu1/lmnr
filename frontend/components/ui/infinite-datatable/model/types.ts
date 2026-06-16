@@ -53,6 +53,15 @@ export interface InfiniteDataTableProps<TData extends RowData> extends Omit<
    * internal-scroll behavior unchanged.
    */
   windowScroll?: boolean;
+  /**
+   * windowScroll only. Extra elements above the table whose height changes
+   * should re-trigger the scrollMargin measurement (e.g. content lifted out of
+   * `children` into a page sibling). The table already observes its own
+   * `children`; pass refs to anything sitting above it but outside `children`.
+   * Defaults to none, so consumers that keep their dynamic content inside
+   * `children` are unaffected.
+   */
+  aboveTableRefs?: RefObject<HTMLElement | null>[];
 }
 
 export interface InfiniteDataTableHeaderProps<TData extends RowData> {

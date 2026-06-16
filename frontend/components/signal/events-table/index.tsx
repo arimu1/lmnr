@@ -2,7 +2,7 @@
 
 import { type Row } from "@tanstack/react-table";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { shallow } from "zustand/shallow";
 
 import AdvancedSearch from "@/components/common/advanced-search";
@@ -14,7 +14,6 @@ import { useClusterId } from "@/components/signal/hooks/use-cluster-id";
 import { useEmergingClusterId } from "@/components/signal/hooks/use-emerging-cluster-id";
 import { getFilterClusterIds, useSignalStoreContext } from "@/components/signal/store.tsx";
 import { ColumnsMenu } from "@/components/ui/columns-menu";
-import DateRangeFilter from "@/components/ui/date-range-filter";
 import { getDisplayRange, getTimeDifference } from "@/components/ui/date-range-filter/utils.ts";
 import { InfiniteDataTable } from "@/components/ui/infinite-datatable";
 import { useInfiniteScroll } from "@/components/ui/infinite-datatable/hooks";
@@ -87,6 +86,12 @@ function PureEventsTable() {
   const { columns, filters } = useMemo(() => buildEventsColumns(signal.schemaFields), [signal.schemaFields]);
 
   const setTraceId = useSignalStoreContext((state) => state.setTraceId);
+
+  // Clusters block sits above the table as a page sibling (outside the table's
+  // `children`). Feed its ref to the table so windowScroll scrollMargin stays
+  // in sync when its height changes (chart toggle, top-movers load, breadcrumb).
+  const clustersBlockRef = useRef<HTMLDivElement>(null);
+  const aboveTableRefs = useMemo(() => [clustersBlockRef], []);
 
   const fetchEvents = useCallback(
     async (pageNumber: number) => {
@@ -232,10 +237,20 @@ function PureEventsTable() {
   }, [pastHours, startDate, endDate, searchParams, pathName, router]);
 
   return (
-    <div className="flex px-4 pb-4">
+    <div className="flex flex-col px-4 pb-4">
+      {/* Clusters content lifted to a page sibling above the table.
+          Time picker lives on the tabs row (signal/index.tsx); it's URL-bound so it
+          still drives both the clusters fetches and the table from there. */}
+      <div ref={clustersBlockRef} className="flex flex-col items-start">
+        <TopMovers className="my-6" />
+        {/* Breadcrumb sits above the cluster list + chart, below the top-movers row. */}
+        {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
+        <ClustersSection className="mt-1 mb-6" />
+      </div>
       <InfiniteDataTable<EventRow>
         className="w-full"
         windowScroll
+        aboveTableRefs={aboveTableRefs}
         columns={columns}
         data={events}
         onRowClick={handleRowClick}
@@ -250,6 +265,7 @@ function PureEventsTable() {
         estimatedRowHeight={80}
         emptyRow={filter.length === 0 && !textSearchFilter ? getEmptyRow({ pastHours, startDate, endDate }) : undefined}
       >
+        {/* Table-local toolbar drops to sit directly above the table. */}
         <div className="flex flex-1 w-full h-full gap-2">
           <DataTableFilter columns={filters} filters={effective.filters} onFiltersChange={setFilters} />
           <ColumnsMenu
@@ -259,7 +275,6 @@ function PureEventsTable() {
             }))}
           />
           <ViewsToolbar projectId={params.projectId} resource={`signal-events:${signal.id}`} />
-          <DateRangeFilter />
         </div>
         <div className="w-full px-px">
           <AdvancedSearch
@@ -272,10 +287,6 @@ function PureEventsTable() {
             className="w-full flex-1"
           />
         </div>
-        <TopMovers className="my-2" />
-        {/* Breadcrumb sits above the cluster list + chart, below the top-movers row. */}
-        {emergingClusterId ? <EmergingClusterBreadcrumbs /> : <ClusterBreadcrumbs />}
-        <ClustersSection className="mb-2" />
       </InfiniteDataTable>
     </div>
   );

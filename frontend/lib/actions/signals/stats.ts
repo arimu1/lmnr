@@ -18,14 +18,37 @@ export interface SignalSparklineData {
   [signalId: string]: { timestamp: string; count: number }[];
 }
 
-function getIntervalForHours(hours: number): { interval: string; intervalMs: number } {
-  if (hours <= 1) return { interval: "1 MINUTE", intervalMs: 60_000 };
-  if (hours <= 3) return { interval: "5 MINUTE", intervalMs: 5 * 60_000 };
-  if (hours <= 24) return { interval: "1 HOUR", intervalMs: 3_600_000 };
-  if (hours <= 72) return { interval: "3 HOUR", intervalMs: 3 * 3_600_000 };
-  if (hours <= 168) return { interval: "6 HOUR", intervalMs: 6 * 3_600_000 };
-  if (hours <= 336) return { interval: "12 HOUR", intervalMs: 12 * 3_600_000 };
-  return { interval: "1 DAY", intervalMs: 86_400_000 };
+export type SparklineInterval = {
+  intervalValue: number;
+  intervalUnit: "minute" | "hour" | "day";
+  interval: string; // CH "<n> <UNIT>" string, derived from the structured value
+  intervalMs: number;
+};
+
+const UNIT_MS: Record<SparklineInterval["intervalUnit"], number> = {
+  minute: 60_000,
+  hour: 3_600_000,
+  day: 86_400_000,
+};
+
+function makeInterval(intervalValue: number, intervalUnit: SparklineInterval["intervalUnit"]): SparklineInterval {
+  return {
+    intervalValue,
+    intervalUnit,
+    interval: `${intervalValue} ${intervalUnit.toUpperCase()}`,
+    intervalMs: intervalValue * UNIT_MS[intervalUnit],
+  };
+}
+
+// Sparkline bin size by window length — shared by signal-card and top-movers sparklines.
+export function getIntervalForHours(hours: number): SparklineInterval {
+  if (hours <= 1) return makeInterval(1, "minute");
+  if (hours <= 3) return makeInterval(5, "minute");
+  if (hours <= 24) return makeInterval(1, "hour");
+  if (hours <= 72) return makeInterval(3, "hour");
+  if (hours <= 168) return makeInterval(6, "hour");
+  if (hours <= 336) return makeInterval(12, "hour");
+  return makeInterval(1, "day");
 }
 
 function floorToInterval(ts: number, intervalMs: number): number {

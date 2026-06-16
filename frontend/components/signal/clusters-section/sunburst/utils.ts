@@ -12,13 +12,13 @@ export interface SunburstData {
   clusterId?: string;
 }
 
-// Selection-relative opacity for a segment. No selection → full (no dimming).
-// selected → 1.0; descendant of selected → 0.65; everything else → 0.2.
+// Selection-relative opacity for a segment. With no selection, everything is a
+// child of the (implicit) root → all get the descendant opacity (0.6).
+// selected → 1.0; descendant of selected (or no selection) → 0.6; else → 0.1.
 function opacityFor(id: string, selectedId: string | null, descendantIds: Set<string>): number {
-  if (!selectedId) return 1;
-  if (id === selectedId) return 1;
-  if (descendantIds.has(id)) return 0.65;
-  return 0.2;
+  if (selectedId && id === selectedId) return 1;
+  if (!selectedId || descendantIds.has(id)) return 0.6;
+  return 0.1;
 }
 
 interface SelectionScope {
@@ -64,8 +64,8 @@ export function buildSunburstData(
   // Reverse top-level clusters so sorted order reads left→right across the dome.
   const children = tree.map((n) => nodeToSunburst(n, counts, hasTimeRange, scope)).reverse();
   if (unclusteredCount > 0) {
-    // Pushed AFTER the reverse → Unclustered stays pinned at the right (180°→0°) end.
-    children.push({
+    // Unshifted AFTER the reverse → Unclustered lands at the opposite (left, 180°) end.
+    children.unshift({
       name: "Unclustered Events",
       value: unclusteredCount,
       fill: withOpacity(UNCLUSTERED_COLOR, opacityFor(UNCLUSTERED_ID, selectedId, descendantIds)),

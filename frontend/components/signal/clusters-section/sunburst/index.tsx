@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SunburstChart } from "recharts";
+import { SunburstChart, Tooltip } from "recharts";
 
 import { cn } from "@/lib/utils";
 
 import ClusterListEmptyState from "../cluster-list/empty-state";
 import { type SunburstData, sunburstHasData } from "./utils";
+
+const INNER_RADIUS = 80;
+
+// SunburstChart passes the hovered node as payload[0] (a SunburstData node).
+function SunburstTooltip({ active, payload }: { active?: boolean; payload?: { name?: string; value?: number }[] }) {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
+  return (
+    <div className="rounded-md border bg-background px-2 py-1 text-xs shadow-md">
+      <div className="font-medium">{name}</div>
+      <div className="text-muted-foreground">{value?.toLocaleString()} events</div>
+    </div>
+  );
+}
 
 export default function Sunburst({
   data,
@@ -69,13 +83,15 @@ export default function Sunburst({
             stroke="var(--color-secondary)"
             startAngle={0}
             endAngle={180}
-            innerRadius={80}
+            innerRadius={INNER_RADIUS}
             textOptions={{ fill: "transparent", stroke: "transparent", pointerEvents: "none" }}
             onClick={(node) => {
               const id = (node as SunburstData).clusterId as string | undefined;
               if (id) onNavigateToCluster(id);
             }}
-          />
+          >
+            <Tooltip content={<SunburstTooltip />} />
+          </SunburstChart>
         </div>
       )}
     </div>

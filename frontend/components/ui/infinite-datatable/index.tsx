@@ -79,6 +79,7 @@ export function InfiniteDataTable<TData extends RowData>({
   loadMoreButton,
   hideSelectionPanel = false,
   windowScroll = false,
+  aboveTableRefs,
   ...tableOptions
 }: PropsWithChildren<InfiniteDataTableProps<TData>>) {
   const selectedRowIds = state?.rowSelection ? Object.keys(state.rowSelection) : [];
@@ -240,8 +241,11 @@ export function InfiniteDataTable<TData extends RowData>({
     const observer = new ResizeObserver(measure);
     observer.observe(parent);
     if (childrenRef.current) observer.observe(childrenRef.current);
+    // Also observe content lifted above the table (outside `children`) so its
+    // height changes keep scrollMargin in sync. No-op when none passed.
+    aboveTableRefs?.forEach((ref) => ref.current && observer.observe(ref.current));
     return () => observer.disconnect();
-  }, [windowScroll]);
+  }, [windowScroll, aboveTableRefs]);
 
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
